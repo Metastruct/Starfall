@@ -11,11 +11,12 @@ SF.Editor = {}
 local addon_path = nil
 
 do
-	local tbl = debug.getinfo( 1 )
-	local file = tbl.short_src
-	addon_path = string.TrimRight( string.match( file, ".-/.-/" ), "/" )
+	--local tbl = debug.getinfo( 1 )
+	--local file = tbl.short_src
+	--addon_path = string.TrimRight( string.match( file, ".-/.-/" ), "/" )
+	-- hooray for metastruct
+	addon_path = ""
 end
-print( "addon path is: " .. addon_path)
 
 local function addToTable( addTo, addFrom )
 	for name, val in pairs( addFrom ) do
@@ -1579,15 +1580,14 @@ elseif SERVER then
 	util.AddNetworkString( "starfall_editor_getacefiles" )
 	util.AddNetworkString( "starfall_editor_geteditorcode" )
 
-	local function getFiles ( dir, dir2 )
+	local function getFiles ( dir )
 		local files = {}
-		local dir2 = dir2 or ""
-		local f, directories = file.Find( dir .. "/" .. dir2 .. "/*", "GAME" )
+		local f, directories = file.Find( dir .. "*", "GAME" )
 		for k, v in pairs( f ) do
-			files[ #files + 1 ] = dir2 .. "/" .. v
+			files[ #files + 1 ] = dir .. v
 		end
 		for k, v in pairs( directories ) do
-			table.Add( files, getFiles( dir, dir2 .. "/" .. v ) )
+			table.Add( files, getFiles( dir .. v .. "/" ) )
 		end
 		return files
 	end
@@ -1597,12 +1597,12 @@ elseif SERVER then
 	do
 		local netSize = 64000
 
-		local files = file.Find( addon_path .. "/html/starfall/ace/*", "GAME" )
+		local files = file.Find( "html/starfall/ace/*", "GAME" )
 
 		local out = ""
 
 		for k, v in pairs( files ) do
-			out = out .. "<script>\n" .. file.Read( addon_path .. "/html/starfall/ace/" .. v, "GAME" ) .. "</script>\n"
+			out = out .. "<script>\n" .. file.Read( "html/starfall/ace/" .. v, "GAME" ) .. "</script>\n"
 		end
 
 		for i = 1, math.ceil( out:len() / netSize ) do
@@ -1634,7 +1634,7 @@ elseif SERVER then
 
 	net.Receive( "starfall_editor_getacefiles", sendAceFile )
 
-	for k, v in pairs( getFiles( addon_path, "materials/radon" ) ) do
+	for k, v in pairs( getFiles( "materials/radon/" ) ) do
 		resource.AddFile( v )
 	end
 
