@@ -1519,7 +1519,12 @@ if CLIENT then
 		end
 	end )
 	net.Receive( "starfall_editor_geteditorcode", function ( len )
-		htmlEditorCode = net.ReadString()
+		//htmlEditorCode = net.ReadString()
+		http.Fetch( "https://raw.githubusercontent.com/INPStarfall/Starfall/develop/html/starfall/editor.html", function( html )
+			htmlEditorCode = html
+		end, function( error )
+			error("Could not get editor code (error " .. tostring(error) .. ")" )
+		end )
 		SF.Editor.codeMap = net.ReadTable()
 		table.Merge( SF.Editor.codeMap, createCodeMap() )
 	end )
@@ -1617,7 +1622,7 @@ elseif SERVER then
 
 	hook.Add( "PlayerInitialSpawn", "starfall_file_init", function ( ply )
 		net.Start( "starfall_editor_geteditorcode" )
-			net.WriteString( file.Read( addon_path .. "/html/starfall/editor.html", "GAME" ) )
+			--net.WriteString( file.Read( addon_path .. "/html/starfall/editor.html", "GAME" ) )
 			net.WriteTable( createCodeMap() )
 		net.Send( ply )
 
