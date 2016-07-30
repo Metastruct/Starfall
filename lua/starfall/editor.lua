@@ -15,6 +15,7 @@ do
 	local file = tbl.short_src
 	addon_path = string.TrimRight( string.match( file, ".-/.-/" ), "/" )
 end
+print( "addon path is: " .. addon_path)
 
 local function addToTable( addTo, addFrom )
 	for name, val in pairs( addFrom ) do
