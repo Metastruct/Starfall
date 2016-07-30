@@ -1522,6 +1522,7 @@ if CLIENT then
 		//htmlEditorCode = net.ReadString()
 		http.Fetch( "https://raw.githubusercontent.com/INPStarfall/Starfall/develop/html/starfall/editor.html", function( html )
 			htmlEditorCode = html
+			print( "LOADED STARFALL" )
 		end, function( error )
 			error("Could not get editor code (error " .. tostring(error) .. ")" )
 		end )
