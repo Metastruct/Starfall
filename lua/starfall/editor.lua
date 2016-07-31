@@ -543,10 +543,9 @@ if CLIENT then
 		keys[ KEY_RIGHT ]		= "right"
 
 		function textPanel:OnKeyCodeTyped ( key, notfirst )
-			local shift = ( input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT ) ) and key != KEY_SPACE
+			local shift = input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT )
 			local control = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_RCONTROL )
-			local alt = input.IsKeyDown( KEY_LALT ) or input.IsKeyDown( KEY_RALT )
-			print( "keycode typed!!!", shift, control, alt, key )
+			local alt = input.IsKeyDown( KEY_LALT ) or input.IsKeyDown( KEY_RALT ) 
 
 			local mod = 0
 
