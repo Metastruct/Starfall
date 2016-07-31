@@ -546,6 +546,7 @@ if CLIENT then
 			local shift = ( input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT ) ) and key != KEY_SPACE
 			local control = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_RCONTROL )
 			local alt = input.IsKeyDown( KEY_LALT ) or input.IsKeyDown( KEY_RALT )
+			print( "keycode typed!!!", shift, control, alt, key )
 
 			local mod = 0
 
