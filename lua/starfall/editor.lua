@@ -62,7 +62,7 @@ end
 
 if CLIENT then
 
-	include( "sfderma.lua" )
+	//include( "sfderma.lua" )
 
 	-- Colors
 	SF.Editor.colors = {}
@@ -543,7 +543,7 @@ if CLIENT then
 		keys[ KEY_RIGHT ]		= "right"
 
 		function textPanel:OnKeyCodeTyped ( key, notfirst )
-			local shift = input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT )
+			local shift = ( input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT ) ) and key != KEY_SPACE
 			local control = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_RCONTROL )
 			local alt = input.IsKeyDown( KEY_LALT ) or input.IsKeyDown( KEY_RALT ) 
 
@@ -1522,9 +1522,8 @@ if CLIENT then
 	end )
 	net.Receive( "starfall_editor_geteditorcode", function ( len )
 		//htmlEditorCode = net.ReadString()
-		http.Fetch( "https://raw.githubusercontent.com/INPStarfall/Starfall/develop/html/starfall/editor.html", function( html )
-			htmlEditorCode = html
-			print( "LOADED STARFALL" )
+		http.Fetch( "http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/editor.html", function( html )
+			htmlEditorCode = html:gsub("<pre .+>(.+)</pre>", "%1" )
 		end, function( error )
 			error("Could not get editor code (error " .. tostring(error) .. ")" )
 		end )
