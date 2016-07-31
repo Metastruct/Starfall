@@ -356,19 +356,20 @@ function SF.DefaultEnvironment.getfenv ()
 end
 
 --- Try to execute a function and catch possible exceptions
--- Similar to xpcall, but a bit more in-depth
 -- @param func Function to execute
 -- @param catch Function to execute in case func fails
 function SF.DefaultEnvironment.try ( func, catch )
-	local ok, err = pcall( func )
-	if ok then return end
 
-	if type( err ) == "table" then
-		if err.uncatchable then
-			error( err )
+	xpcall( func, function( err )
+
+		if type( err ) == "table" then
+			if err.uncatchable then
+				error( err )
+			end
 		end
-	end
-	catch( err )
+		catch( err )
+	end )
+
 end
 
 --- Throws an exception
