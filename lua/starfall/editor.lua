@@ -546,6 +546,9 @@ if CLIENT then
 			local shift = input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT )
 			local control = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_RCONTROL )
 			local alt = input.IsKeyDown( KEY_LALT ) or input.IsKeyDown( KEY_RALT ) 
+			if key == KEY_SPACE and shift and !( control or alt ) then -- shift space should still press spacebar
+				shift = false
+			end
 
 			local mod = 0
 
