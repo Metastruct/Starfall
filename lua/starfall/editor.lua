@@ -62,7 +62,7 @@ end
 
 if CLIENT then
 
-	//include( "sfderma.lua" )
+	include( "sfderma.lua" )
 
 	-- Colors
 	SF.Editor.colors = {}
