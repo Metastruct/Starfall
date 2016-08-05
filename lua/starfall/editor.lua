@@ -131,8 +131,14 @@ if CLIENT then
 
 	local aceFiles = {}
 	local htmlEditorCode = nil
+	local hasRequested = false
 
 	function SF.Editor.init ()
+		if not hasRequested then
+			net.Start( "starfall_editor_geteditorcode" )
+			net.SendToServer()
+			hasRequested = true
+		end
 		if not SF.Editor.safeToInit then 
 			SF.AddNotify( LocalPlayer(), "Starfall is downloading editor files, please wait.", NOTIFY_GENERIC, 5, NOTIFYSOUND_DRIP3 ) 
 			return false
@@ -1609,7 +1615,7 @@ elseif SERVER then
 		end
 	end
 
-
+	local lastEditorRequests = {}
 	local plyIndex = {}
 	local function sendAceFile ( len, ply )
 		local index = plyIndex[ ply ]
@@ -1621,7 +1627,13 @@ elseif SERVER then
 		plyIndex[ ply ] = index + 1
 	end
 
-	hook.Add( "PlayerInitialSpawn", "starfall_file_init", function ( ply )
+	net.Receive( "starfall_editor_geteditorcode", function( len, ply )
+		if lastEditorRequests[ ply ] and RealTime() - lastEditorRequests[ ply ] < 60 then
+			local time = math.ceil( lastEditorRequests[ ply ] - RealTime() )
+			ply:SendLua[[notification.AddLegacy( "Please wait ]] .. time .. [[ seconds before requesting again", 1, 10 ) surface.PlaySound"buttons/button10.wav"]]
+			return
+		end
+		lastEditorRequests[ ply ] = RealTime()
 		net.Start( "starfall_editor_geteditorcode" )
 			--net.WriteString( file.Read( addon_path .. "/html/starfall/editor.html", "GAME" ) )
 			net.WriteTable( createCodeMap() )
