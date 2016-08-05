@@ -143,6 +143,9 @@ if CLIENT then
 
 	function SF.Editor.init ()
 		if not hasRequested then
+
+			SF.Editor.ShowLoadingScreen()
+
 			net.Start( "starfall_editor_geteditorcode" )
 			net.SendToServer()
 			hasRequested = true
@@ -189,6 +192,54 @@ if CLIENT then
 		SF.Editor.initialized = true
 
 		return true
+	end
+
+	function SF.Editor.ShowLoadingScreen()
+		SF.Editor.Progress = {}
+		SF.Editor.Progress.File = "undefined"
+		SF.Editor.Progress.Cur = 0
+		SF.Editor.Progress.Start = 0
+
+		local fadeDur = 0.5
+
+
+		hook.Add( "HUDPaint", "starfall_editor_loadingprogress", function()
+			if !SF.Editor.Progress then return end
+			if !SF.Editor.Progress.Cur or !SF.Editor.Progress.Count then return end
+			if SF.Editor.Progress.End and RealTime() > SF.Editor.Progress.End + fadeDur then
+				SF.Editor.Progress = nil
+				hook.Remove( "HUDPaint", "starfall_editor_loadingprogress" )
+				return
+			end
+			if SF.Editor.Progress.Start == 0 then SF.Editor.Progress.Start = RealTime() end
+			local w, h = ScrW(), ScrH()
+			local bw, bh = 500, 48
+			
+			local y = h - bh * 6 + math.sin( RealTime() ) * bh/8
+			
+			local Progress = SF.Editor.Progress.Cur / SF.Editor.Progress.Count
+			if Progress == math.huge then
+				Progress = 0
+			end
+			local Alpha = 128
+			local FadePercent = 1
+			if SF.Editor.Progress.Start + fadeDur > RealTime() then
+				FadePercent = math.Clamp( math.TimeFraction( SF.Editor.Progress.Start, SF.Editor.Progress.Start + fadeDur, RealTime() ), 0, 1 )
+			elseif SF.Editor.Progress.End and SF.Editor.Progress.End + fadeDur > RealTime() then
+				FadePercent = 1 - math.Clamp( math.TimeFraction( SF.Editor.Progress.End, SF.Editor.Progress.End + fadeDur, RealTime() ), 0, 1 )
+			end
+			
+			surface.SetDrawColor( 0, 0, 0, 128*FadePercent )
+			surface.DrawRect( w / 2 - bw / 2 + Progress * bw, y, bw - Progress * bw, bh )
+			surface.SetDrawColor( 0, 255, 0, 128*FadePercent )
+			surface.DrawRect( w / 2 - bw / 2, y, Progress * bw, bh )
+			
+			draw.DrawText( "Starfall is loading files...", "DermaLarge", w/2, y, Color( 255, 230, 55, 255*FadePercent ), TEXT_ALIGN_CENTER )
+			draw.DrawText( SF.Editor.Progress.File .. " loaded", "ChatFont", w/2, y + bh - 18, Color( 55, 255, 55, 255*FadePercent ), TEXT_ALIGN_CENTER )
+			
+			
+		end )
+
 	end
 
 	function SF.Editor.open ()
@@ -1526,11 +1577,23 @@ if CLIENT then
 		local fileName = net.ReadString()
 		local isEnd = net.ReadBool()
 
+		local count = net.ReadUInt(8)
+
 		http.Fetch( "http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/ace/" .. fileName, function( body, len, headers, code )
 			if code == 404 then
 				ErrorNoHalt( "Could not get Starfall editor ACE file: " .. fileName )
 			else
 				table.insert( aceFiles, "<script>\n" .. body:gsub("<pre .+>(.+)</pre>", "%1" ) .. "\n</script>" )
+				if SF.Editor.Progress then
+					SF.Editor.Progress.File = fieName
+					SF.Editor.Progress.Cur = SF.Editor.Progress.Cur + 1
+					SF.Editor.Progress.Count = count
+
+					if isEnd then
+						SF.Editor.Progress.End = RealTime()
+					end
+
+				end
 
 			end
 			if isEnd then
@@ -1545,8 +1608,16 @@ if CLIENT then
 	end )
 	net.Receive( "starfall_editor_geteditorcode", function ( len )
 		//htmlEditorCode = net.ReadString()
+		local count = net.ReadUInt( 8 )
 		http.Fetch( "http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/editor.html", function( html )
 			htmlEditorCode = html:gsub("<pre .+>(.+)</pre>", "%1" )
+			if SF.Editor.Progress then
+				SF.Editor.Progress.File = "editor.html"
+				SF.Editor.Progress.Cur = SF.Editor.Progress.Cur + 1
+				SF.Editor.Progress.Count = count
+
+			end
+
 		end, function( error )
 			error("Could not get editor code (error " .. tostring(error) .. ")" )
 		end )
@@ -1632,17 +1703,19 @@ elseif SERVER then
 
 	local lastEditorRequests = {}
 	local plyIndex = {}
+	local fileCount = #acefiles + 1 -- +1 for editor.html
+
 	local function sendAceFile ( len, ply )
 		local index = plyIndex[ ply ]
 		net.Start( "starfall_editor_getacefiles" )
 			//net.WriteInt( index, 8 )
 			net.WriteString( acefiles[ index ] )
 			net.WriteBool( index == #acefiles )
+			net.WriteUInt( fileCount,8)
 			//net.WriteBit( index == #acefiles )
 		net.Send( ply )
 		plyIndex[ ply ] = index + 1
 	end
-
 	net.Receive( "starfall_editor_geteditorcode", function( len, ply )
 		if lastEditorRequests[ ply ] then
 			ply:SendLua( [[notification.AddLegacy( "You may only send one editor request to the server", 1, 10 ) surface.PlaySound"buttons/button10.wav"]] )
@@ -1651,6 +1724,7 @@ elseif SERVER then
 		lastEditorRequests[ ply ] = true
 		net.Start( "starfall_editor_geteditorcode" )
 			--net.WriteString( file.Read( addon_path .. "/html/starfall/editor.html", "GAME" ) )
+			net.WriteUInt( fileCount,8)
 			net.WriteTable( createCodeMap() )
 		net.Send( ply )
 
