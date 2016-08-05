@@ -1585,7 +1585,7 @@ if CLIENT then
 			else
 				table.insert( aceFiles, "<script>\n" .. body:gsub("<pre .+>(.+)</pre>", "%1" ) .. "\n</script>" )
 				if SF.Editor.Progress then
-					SF.Editor.Progress.File = fieName
+					SF.Editor.Progress.File = fileName
 					SF.Editor.Progress.Cur = SF.Editor.Progress.Cur + 1
 					SF.Editor.Progress.Count = count
 
