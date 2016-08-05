@@ -1630,7 +1630,7 @@ elseif SERVER then
 	net.Receive( "starfall_editor_geteditorcode", function( len, ply )
 		if lastEditorRequests[ ply ] and RealTime() - lastEditorRequests[ ply ] < 60 then
 			local time = math.ceil( lastEditorRequests[ ply ] - RealTime() )
-			ply:SendLua[[notification.AddLegacy( "Please wait ]] .. time .. [[ seconds before requesting again", 1, 10 ) surface.PlaySound"buttons/button10.wav"]]
+			ply:SendLua( [[notification.AddLegacy( "Please wait ]] .. time .. [[ seconds before requesting again", 1, 10 ) surface.PlaySound"buttons/button10.wav"]] )
 			return
 		end
 		lastEditorRequests[ ply ] = RealTime()
