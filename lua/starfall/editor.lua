@@ -59,6 +59,14 @@ local function createCodeMap ()
 
 	return map
 end
+if SERVER then
+
+	util.AddNetworkString( "starfall_editor_status" )
+	util.AddNetworkString( "starfall_editor_getacefiles" )
+	util.AddNetworkString( "starfall_editor_geteditorcode" )
+
+end
+
 
 if CLIENT then
 
@@ -1581,9 +1589,6 @@ if CLIENT then
 
 elseif SERVER then
 
-	util.AddNetworkString( "starfall_editor_status" )
-	util.AddNetworkString( "starfall_editor_getacefiles" )
-	util.AddNetworkString( "starfall_editor_geteditorcode" )
 
 	local function getFiles ( dir )
 		local files = {}
