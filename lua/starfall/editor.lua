@@ -1523,16 +1523,25 @@ if CLIENT then
 	end
 
 	net.Receive( "starfall_editor_getacefiles", function ( len )
-		local index = net.ReadInt( 8 )
-		aceFiles[ index ] = net.ReadString()
-		
-		if not tobool( net.ReadBit() ) then 
-			net.Start( "starfall_editor_getacefiles" )
-			net.SendToServer()
-		else
-			SF.Editor.safeToInit = true
-			SF.Editor.init()
-		end
+		local fileName = net.ReadString()
+		local isEnd = net.ReadBool()
+
+		http.Fetch( "http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/ace/" .. fileName, function( body, len, headers, code )
+			if code == 404 then
+				ErrorNoHalt( "Could not get Starfall editor ACE file: " .. fileName )
+			else
+				table.insert( aceFiles, "<script>\n" .. body:gsub("<pre .+>(.+)</pre>", "%1" ) .. "\n</script>" )
+
+			end
+			if isEnd then
+				SF.Editor.safeToInit = true
+				SF.Editor.init()
+				notification.AddLegacy( "Starfall editor initialized!", NOTIFY_GENERIC, 5 )
+			else
+				net.Start( "starfall_editor_getacefiles" )
+				net.SendToServer()
+			end
+		end )
 	end )
 	net.Receive( "starfall_editor_geteditorcode", function ( len )
 		//htmlEditorCode = net.ReadString()
@@ -1609,15 +1618,16 @@ elseif SERVER then
 
 		local files = file.Find( "html/starfall/ace/*", "GAME" )
 
-		local out = ""
+		//local out = ""
 
 		for k, v in pairs( files ) do
-			out = out .. "<script>\n" .. file.Read( "html/starfall/ace/" .. v, "GAME" ) .. "</script>\n"
+			table.insert( acefiles, v )
+			//out = out .. "<script>\n" .. file.Read( "html/starfall/ace/" .. v, "GAME" ) .. "</script>\n"
 		end
 
-		for i = 1, math.ceil( out:len() / netSize ) do
-			acefiles[i] = out:sub( (i - 1)*netSize + 1, i*netSize )
-		end
+		//for i = 1, math.ceil( out:len() / netSize ) do
+		//	acefiles[i] = out:sub( (i - 1)*netSize + 1, i*netSize )
+		//end
 	end
 
 	local lastEditorRequests = {}
@@ -1625,20 +1635,20 @@ elseif SERVER then
 	local function sendAceFile ( len, ply )
 		local index = plyIndex[ ply ]
 		net.Start( "starfall_editor_getacefiles" )
-			net.WriteInt( index, 8 )
+			//net.WriteInt( index, 8 )
 			net.WriteString( acefiles[ index ] )
-			net.WriteBit( index == #acefiles )
+			net.WriteBool( index == #acefiles )
+			//net.WriteBit( index == #acefiles )
 		net.Send( ply )
 		plyIndex[ ply ] = index + 1
 	end
 
 	net.Receive( "starfall_editor_geteditorcode", function( len, ply )
-		if lastEditorRequests[ ply ] and RealTime() - lastEditorRequests[ ply ] < 60 then
-			local time = math.ceil( lastEditorRequests[ ply ] - RealTime() )
-			ply:SendLua( [[notification.AddLegacy( "Please wait ]] .. time .. [[ seconds before requesting again", 1, 10 ) surface.PlaySound"buttons/button10.wav"]] )
+		if lastEditorRequests[ ply ] then
+			ply:SendLua( [[notification.AddLegacy( "You may only send one editor request to the server", 1, 10 ) surface.PlaySound"buttons/button10.wav"]] )
 			return
 		end
-		lastEditorRequests[ ply ] = RealTime()
+		lastEditorRequests[ ply ] = true
 		net.Start( "starfall_editor_geteditorcode" )
 			--net.WriteString( file.Read( addon_path .. "/html/starfall/editor.html", "GAME" ) )
 			net.WriteTable( createCodeMap() )
