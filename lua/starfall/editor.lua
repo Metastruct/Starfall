@@ -1579,32 +1579,26 @@ if CLIENT then
 
 		local count = net.ReadUInt(8)
 
-		http.Fetch( "http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/ace/" .. fileName, function( body, len, headers, code )
-			if code == 404 then
-				ErrorNoHalt( "Could not get Starfall editor ACE file: " .. fileName )
-			else
-				table.insert( aceFiles, "<script>\n" .. body:gsub("<pre .+>(.+)</pre>", "%1" ) .. "\n</script>" )
-				if SF.Editor.Progress then
-					SF.Editor.Progress.File = fileName
-					SF.Editor.Progress.Cur = SF.Editor.Progress.Cur + 1
-					SF.Editor.Progress.Count = count
+		table.insert( aceFiles, "<script src=\"http://raw.githubusercontent.com/Metastruct/Starfall/master/html/starfall/ace/" .. fileName .. "\"></script>" )
+		if SF.Editor.Progress then
+			SF.Editor.Progress.File = fileName
+			SF.Editor.Progress.Cur = SF.Editor.Progress.Cur + 1
+			SF.Editor.Progress.Count = count
 
-					if isEnd then
-						SF.Editor.Progress.End = RealTime()
-					end
-
-				end
-
-			end
 			if isEnd then
-				SF.Editor.safeToInit = true
-				SF.Editor.init()
-				notification.AddLegacy( "Starfall editor initialized!", NOTIFY_GENERIC, 5 )
-			else
-				net.Start( "starfall_editor_getacefiles" )
-				net.SendToServer()
+				SF.Editor.Progress.End = RealTime()
 			end
-		end )
+
+		end
+		if isEnd then
+			SF.Editor.safeToInit = true
+			SF.Editor.init()
+			notification.AddLegacy( "Starfall editor initialized!", NOTIFY_GENERIC, 5 )
+		else
+			net.Start( "starfall_editor_getacefiles" )
+			net.SendToServer()
+		end
+		
 	end )
 	net.Receive( "starfall_editor_geteditorcode", function ( len )
 		//htmlEditorCode = net.ReadString()
